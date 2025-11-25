@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QA Evaluation App iTero Tech</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .top-inputs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .input-group label {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .input-group input {
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .main {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    textarea {
+      width: 45%;
+      height: 70vh;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: both;
+      background: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      min-width: 450px;
+    }
+
+    .criteria-list {
+  width: 55%;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  gap: 10px; /* Space between items */
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+
+    .criterion {
+      background: white;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    button {
+      margin-top: 5px;
+      margin-right: 10px;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .yes {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .no {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .feedback {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+
+    .copy-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+      .main {
+        flex-direction: column;
+      }
+      textarea, .criteria-list {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>QA Evaluation App iTero Tech</h1>
+
+<div class="top-inputs">
+  <div class="input-group">
+    <label for="agentName">Agent's Name</label>
+    <input type="text" id="agentName" placeholder="Enter agent's name">
+  </div>
+  <div class="input-group">
+    <label for="callerName">Caller’s Name</label>
+    <input type="text" id="callerName" placeholder="Enter caller’s name">
+  </div>
+  <div class="input-group">
+    <label for="callReason">Call Reason</label>
+    <input type="text" id="callReason" placeholder="Enter reason for call">
+  </div>
+  <div class="input-group">
+    <label for="orderId">Order ID</label>
+    <input type="text" id="orderId" placeholder="Enter order ID">
+  </div>
+  <div class="input-group">
+    <label for="ticketId">Ticket ID</label>
+    <input type="text" id="ticketId" placeholder="Enter ticket ID">
+  </div>
+</div>
+
+
+<div class="main">
+  <div>
+    <textarea id="feedback" placeholder="Feedback will appear here..."></textarea>
+    <br>
+    <button class="copy-btn" onclick="copyFeedback()">Copy All Feedback</button>
+  </div>
+
+  <div class="criteria-list" id="criteria-container"></div>
+</div>
+
+<script>
+  let accomplishments = [];
+let developmentFeedback = [];
+
+const criteria = [
+  {
+    label: "Greeting",
+    yes: "✅ Started the call with a warm, friendly greeting that set a positive tone. This represents our CARE value: 'Respond with Empathy'",
+    no: "🚩 Used the correct greeting. (2pts)",
+    feedback: "⚠️ Used the correct greeting. (2pts)",
+  },
+  {
+    label: "Offer Help at End",
+    yes: "✅ Closed by checking if there was anything else they could help with, showing genuine care. This represents our CARE value: 'Connect'.",
+    no: "🚩 Offered additional assistance at the end of the call. (2pts)",
+    feedback: "⚠️ Offered additional assistance at the end of the call. (2pts)",
+  },
+  {
+    label: "Proper Closing",
+    yes: "✅ Wrapped up the conversation politely and professionally, leaving a good final impression. This represents our CARE value: 'Connect'.",
+    no: "🚩 Did a proper and professional closing. (2pts)",
+    feedback: "⚠️ Did a proper and professional closing. (2pts)",
+  },
+  {
+    label: "Call Validation",
+    yes: "✅ Confirmed account and ticket ID before moving forward, ensuring accuracy.",
+    no: "🚩 The agent validated the call, asking for the ticket ID in case of a transfer and validated the account name with the customer and/or the FL agent. (7pts)",
+    feedback: "⚠️ The agent validated the call, asking for the ticket ID in case of a transfer and validated the account name with the customer and/or the FL agent. (7pts)",
+  },
+  {
+    label: "Courtesy Language",
+    yes: "✅ Maintained polite and respectful language throughout, keeping the tone professional. This represents our CARE value: 'Connect'.",
+    no: "🚩 The agent used courteous phrases during the call, demonstrating a clear willingness to assist and using professional business Language. (5pts)",
+    feedback: "⚠️ The agent used courteous phrases during the call, demonstrating a clear willingness to assist and using professional business Language. (5pts)",
+  },
+  {
+    label: "Blame Avoidance",
+    yes: "✅ Focused on solving the issue without placing blame, keeping the conversation positive. This represents our CARE value: 'Connect'.",
+    no: "🚩 The agent did not blame our products, coworkers, or teams negatively and rather focused on the resolution and helping our customers. (4pts)",
+    feedback: "⚠️ The agent did not blame our products, coworkers, or teams negatively and rather focused on the resolution and helping our customers. (4pts)",
+  },
+  {
+    label: "Used Customer Name",
+    yes: "✅ Used the customer's name early on, creating a personal and friendly connection. This represents our CARE value: 'Respond with Empathy'",
+    no: "🚩 The agent used the caller's name from the beginning of the call. (2pts)",
+    feedback: "⚠️ The agent used the caller's name from the beginning of the call. (2pts)",
+  },
+  {
+    label: "No Interruptions",
+    yes: "✅ Let the customer speak without interruption and acknowledged them respectfully. This represents our CARE value: 'Connect'.",
+    no: "🚩 The agent did not interrupt the customer, and in case of an accidental interruption, the agent apologized. (2pts) Rememeber to apologize and let the customer finish what they were saying.",
+    feedback: "⚠️ The agent did not interrupt the customer, and in case of an accidental interruption, the agent apologized. (2pts) Rememeber to apologize and let the customer finish what they were saying.",
+  },
+  {
+    label: "Tone and Energy",
+    yes: "✅ Spoke with energy and warmth, making the conversation pleasant and engaging. This represents our CARE value: 'Connect'.",
+    no: "🚩 There was energy and enthusiasm during the call. The tone of voice was polite and did not sound robotic or scripted. (4pts)",
+    feedback: "⚠️ There was energy and enthusiasm during the call. The tone of voice was polite and did not sound robotic or scripted. (4pts)",
+  },
+  {
+    label: "Conversation Flow",
+    yes: "✅ Kept the discussion flowing naturally, making it easy for the customer to follow.",
+    no: "🚩 The conversation was fluid throughout the call, and the customer was able to understand what was discussed. (2pts)",
+    feedback: "⚠️ The conversation was fluid throughout the call, and the customer was able to understand what was discussed. (2pts)",
+  },
+  {
+    label: "Filler Words",
+    yes: "✅ Spoke clearly without relying on filler words, keeping communication smooth. This represents our CARE value: 'Connect'.",
+    no: "🚩 The agent did not use filler words during the call. (2pts)",
+    feedback: "⚠️ The agent did not use filler words during the call. (2pts)",
+  },
+  {
+    label: "Empathy",
+    yes: "✅ Showed understanding and empathy, helping the customer feel heard and valued. This represents our CARE value: 'Respond with Empathy'",
+    no: "🚩 The agent showed genuine empathy during the call, acknowledging the scenario and offering help. (5pts)",
+    feedback: "⚠️ The agent showed genuine empathy during the call, acknowledging the scenario and offering help. (5pts)",
+  },
+  {
+    label: "Customer emotions",
+    yes: "✅ Helped turn the conversation around so the customer felt better by the end.",
+    no: "🚩 The agent created a positive emotion change by the end of the interaction. (2pts)",
+    feedback: "⚠️ The agent created a positive emotion change by the end of the interaction. (2pts)",
+  },
+  {
+    label: "Apology",
+    yes: "✅ Offered a genuine apology when needed, showing accountability.",
+    no: "🚩 The agent genuinely apologized to the customer in case of a business mistake. (5pts)",
+    feedback: "⚠️ The agent genuinely apologized to the customer in case of a business mistake. (5pts)",
+  },
+  {
+    label: "Symptom Code",
+    yes: "✅ Chose the most accurate and specific symptom code for the issue.",
+    no: "🚩 The selected symptom codes match the current scenario and are specific to the main reason for the call. (Ticket type, issue type, & sub-issue type) (4pts)",
+    feedback: "⚠️ The selected symptom codes match the current scenario and are specific to the main reason for the call. (Ticket type, issue type, & sub-issue type) (4pts)",
+  },
+  {
+    label: "RMA Fields",
+    yes: "✅ Completed all RMA request fields accurately, ensuring a smooth process.",
+    no: "🚩 RMA ticket(s) were created, and all required fields were filled appropriately depending on the part(s) requested. (8pts)",
+    feedback: "⚠️ RMA ticket(s) were created, and all required fields were filled appropriately depending on the part(s) requested. (8pts)",
+  },
+  {
+    label: "Alt. Address",
+    yes: "✅ Entered the alternate shipping address correctly, meeting the customer's request.",
+    no: "🚩 If an alternative address is required by the customer, the agent should fill in the appropriate fields to accomplish the request. (2pts)",
+    feedback: "⚠️ If an alternative address is required by the customer, the agent should fill in the appropriate fields to accomplish the request. (2pts)",
+  },
+  {
+    label: "Product Complaint",
+    yes: "✅ Logged the product complaint with all needed details for proper follow-up.",
+    no: "🚩 Product complaint ticket(s) were created, and all required fields were filled appropriately depending on the hardware issue. (4pts)",
+    feedback: "⚠️ Product complaint ticket(s) were created, and all required fields were filled appropriately depending on the hardware issue. (4pts)",
+  },
+  {
+    label: "Software Complaint",
+    yes: "✅ Created a software complaint ticket when appropriate, ensuring it was tracked.",
+    no: "🚩 Software complaint was created if applicable. (3pts)",
+    feedback: "⚠️ Software complaint was created if applicable. (3pts)",
+  },
+  {
+    label: "Service Complaint",
+    yes: "✅ Properly documented a service complaint when needed.",
+    no: "🚩 A service complaint was created if applicable. (3pts)",
+    feedback: "⚠️ A service complaint was created if applicable. (3pts)",
+  },
+  {
+    label: "Product Safety",
+    yes: "✅ Submitted a product safety ticket when required, supporting compliance.",
+    no: "🚩 Did not create a safety ticket despite it being required. (Automatic Zero)",
+    feedback: "⚠️ Did not create a safety ticket despite it being required.",
+  },
+  {
+    label: "Correct Template",
+    yes: "✅ Used the correct documentation template to maintain consistency.",
+    no: "🚩 The agent used an adequate documentation template. (2pts)",
+    feedback: "⚠️ The agent used an adequate documentation template. (2pts)",
+  },
+  {
+    label: "Ticket notes",
+    yes: "✅ Documented clear and concise notes that captured all key points discussed during the call.",
+    no: "🚩 The content of the ticket's notes was clear and concise, and described all talking points during the call. (5pts)",
+    feedback: "⚠️ The content of the ticket's notes was clear and concise, and described all talking points during the call. (5pts)",
+  },
+  {
+    label: "True documentation",
+    yes: "✅ Documentation was fully accurate and reliable.",
+    no: "🚩 The documentation contained only true and accurate information. (3pts)",
+    feedback: "⚠️ The documentation contained only true and accurate information. (3pts)",
+  },
+  {
+    label: "Attachments",
+    yes: "✅ Added relevant attachments (e.g., screenshots, logs) to support the resolution.",
+    no: "🚩 The agent attached the required screenshots, videos, emails, logs, or any other relevant information to back up the resolution. (5pts)",
+    feedback: "⚠️ The agent attached the required screenshots, videos, emails, logs, or any other relevant information to back up the resolution. (5pts)",
+  },
+  {
+    label: "Ticket Fields",
+    yes: "✅ Filled all required ticket fields correctly.",
+    no: "🚩 All the main ticket fields were filled out properly, depending on the scenario. (4pts)",
+    feedback: "⚠️ All the main ticket fields were filled out properly, depending on the scenario. (4pts)",
+  },
+  {
+    label: "Return Checkbox",
+    yes: "✅ Correctly marked the return checkbox to trigger the process.",
+    no: "🚩 The return checkbox was selected to trigger the return process. (8pts)",
+    feedback: "⚠️ The return checkbox was selected to trigger the return process. (8pts)",
+  },
+  {
+    label: "Correct Ticket/Account",
+    yes: "✅ Logged the interaction under the correct ticket and account.",
+    no: "🚩 Documented the call under the wrong ticket or account. (4pts)",
+    feedback: "⚠️ Documented the call under the wrong ticket or account. (4pts)",
+  },
+  {
+    label: "Correct Asset",
+    yes: "✅ Selected the correct asset for the case.",
+    no: "🚩 The correct asset was selected, if applicable. (8pts)",
+    feedback: "⚠️ The correct asset was selected, if applicable. (8pts)",
+  },
+  {
+    label: "Correct Part",
+    yes: "✅ Chose the correct part or documented it if not listed.",
+    no: "🚩 The correct part was selected in the parts list on SFDC, and in case the part does not exist, it was documented in the ticket's notes accordingly. (8pts)",
+    feedback: "⚠️ The correct part was selected in the parts list on SFDC, and in case the part does not exist, it was documented in the ticket's notes accordingly. (8pts)",
+  },
+  {
+    label: "Email Clarity",
+    yes: "✅ Sent a clear, professional email free of errors.",
+    no: "🚩 The content of customer-facing emails was clear and grammatically correct. (4pts)",
+    feedback: "⚠️ The content of customer-facing emails was clear and grammatically correct. (4pts)",
+  },
+  {
+    label: "Email Template",
+    yes: "✅ Used the right email template for the situation.",
+    no: "🚩 The correct templates were used for customer-facing emails. (3pts)",
+    feedback: "⚠️ The correct templates were used for customer-facing emails. (3pts)",
+  },
+  {
+    label: "Name documentation",
+    yes: "✅ Recorded the customer's name correctly.",
+    no: "🚩 The agent documented the customer's name correctly. (2pts)",
+    feedback: "⚠️ The agent documented the customer's name correctly. (2pts)",
+  },
+  {
+    label: "Ticket Subject",
+    yes: "✅ Ticket subject clearly matched the scenario.",
+    no: "🚩 The agent used the correct subject on all tickets relevant to the scenario. (3pts)\n Remember that we should use our documentation template to create the subject for all our scenarios.",
+    feedback: "⚠️ The agent used the correct subject on all tickets relevant to the scenario. (3pts)\n Remember that we should use our documentation template to create the subject for all our scenarios.",
+  },
+  {
+    label: "KB Article",
+    yes: "✅ Attached the relevant KB article when helpful.",
+    no: "🚩 The agent attached the relevant KB article to the ticket if applicable. (4pts)",
+    feedback: "⚠️ The agent attached the relevant KB article to the ticket if applicable. (4pts)",
+  },
+  {
+    label: "AHT Usage",
+    yes: "✅ Managed time well, keeping the call efficient and on point. This represents our CARE value: 'Ask'.",
+    no: "🚩 The agent used the appropriate AHT based on the scenario to resolve the call efficiently and correctly. (5pts)",
+    feedback: "⚠️ The agent used the appropriate AHT based on the scenario to resolve the call efficiently and correctly. (5pts)",
+  },
+  {
+    label: "Avoid Dead Air",
+    yes: "✅ Kept the customer informed to prevent awkward silences. This represents our CARE value: 'Connect'.",
+    no: "🚩 The agent avoided dead air by keeping the customer informed of what was being done during the call. (2pts)",
+    feedback: "⚠️ The agent avoided dead air by keeping the customer informed of what was being done during the call. (2pts)",
+  },
+  {
+    label: "Quick Answer",
+    yes: "✅ Answered the call promptly, within 5 seconds.",
+    no: "🚩 The agent answered the call in 5 seconds or less. (6pts)",
+    feedback: "⚠️ The agent answered the call in 5 seconds or less. (6pts)",
+  },
+  {
+    label: "Hold Reason",
+    yes: "✅ The hold/mute protocol was followed appropriately.",
+    no: "🚩 Had a valid reason to place the customer on hold/mute. (2pts)",
+    feedback: "⚠️ Had a valid reason to place the customer on hold/mute. (2pts)",
+  },
+  {
+    label: "Hold Permission",
+    yes: "✅ The hold/mute protocol was followed appropriately.",
+    no: "🚩 The agent asked for permission before placing the customer on hold/mute. (2pts)",
+    feedback: "⚠️ The agent asked for permission before placing the customer on hold/mute. (2pts)",
+  },
+  {
+    label: "Hold Explanation",
+    yes: "✅ The hold/mute protocol was followed appropriately.",
+    no: "🚩 A valid reason was provided to use hold/mute. (2pts)",
+    feedback: "⚠️ A valid reason was provided to use hold/mute. (2pts)",
+  },
+  {
+    label: "Hold Timeframe",
+    yes: "✅ The hold/mute protocol was followed appropriately.",
+    no: "🚩 A timeframe of no longer than 5 minutes was provided to the customer before placing the call on hold/mute. (2pts)",
+    feedback: "⚠️ A timeframe of no longer than 5 minutes was provided to the customer before placing the call on hold/mute. (2pts)",
+  },
+  {
+    label: "Timeframe Met",
+    yes: "✅ The hold/mute protocol was followed appropriately.",
+    no: "🚩 The agent accomplished the timeframe provided to the customer and refreshed the call if applicable. (2pts)",
+    feedback: "⚠️ The agent accomplished the timeframe provided to the customer and refreshed the call if applicable. (2pts)",
+  },
+  {
+    label: "Hold Thanks",
+    yes: "✅ The hold/mute protocol was followed appropriately.",
+    no: "🚩 The agent thanked the customer when returning from hold/mute. (2pts)",
+    feedback: "⚠️ The agent thanked the customer when returning from hold/mute. (2pts)",
+  },
+  {
+    label: "Transfer Info",
+    yes: "✅ Clearly explained the transfer and mentioned the department.",
+    no: "🚩 Connected the customer to the correct department/queue and informed the customer where and why they were transferred if applicable. (2pts)",
+    feedback: "⚠️ Connected the customer to the correct department/queue and informed the customer where and why they were transferred if applicable. (2pts)",
+  },
+  {
+    label: "Probing questions",
+    yes: "✅ Asked thoughtful questions to fully understand the issue. This represents our CARE value: 'Ask'.",
+    no: "🚩 Asked appropriate and complete probing questions relevant to the scenario. (6pts)",
+    feedback: "⚠️ Asked appropriate and complete probing questions relevant to the scenario. (6pts)",
+  },
+  {
+    label: "Avoid Jargon",
+    yes: "✅ Used plain language so all customers could follow along. This represents our CARE value: 'Connect'.",
+    no: "🚩 The agent did not use any technical or internal vocabulary during the call with non-tech-savvy customers. (2pts)",
+    feedback: "⚠️ The agent did not use any technical or internal vocabulary during the call with non-tech-savvy customers. (2pts)",
+  },
+  {
+    label: "Accurate Info",
+    yes: "✅ All shared information was accurate and confirmed. This represents our CARE value: 'Respond with Empathy'",
+    no: "🚩 Shared inaccurate or unchecked information. Remember that we should check either KB or with an SME if we are not sure about a topic. (-8pts)",
+    feedback: "⚠️ Shared inaccurate or unchecked information. Remember that we should check either KB or with an SME if we are not sure about a topic. (8pts)",
+  },
+  {
+    label: "Accomplished all requests.",
+    yes: "✅ Completed all customer requests during the call. This represents our CARE value: 'Respond with Empathy'",
+    no: "🚩 Accomplished all the customer's requests during the call. (8pts)",
+    feedback: "⚠️ Accomplished all the customer's requests during the call. (8pts)",
+  },
+  {
+    label: "Resolution",
+    yes: "✅ Solved the issue through appropriate troubleshooting. This represents our CARE value: 'Respond with Empathy'",
+    no: "🚩 Resolved the scenario by following the appropriate troubleshooting process. (10pts)",
+    feedback: "⚠️ Resolved the scenario by following the appropriate troubleshooting process. (10pts)",
+  },
+  {
+    label: "Callback",
+    yes: "✅ Called back promptly after disconnection or as promised.",
+    no: "🚩 Contacted the customer back in case of a disconnection or if a callback was requested by the customer. (8pts)",
+    feedback: "⚠️ Contacted the customer back in case of a disconnection or if a callback was requested by the customer. (8pts)",
+  },
+  {
+    label: "Proper Escalation",
+    yes: "✅ Escalated the case to the correct team when needed.",
+    no: "🚩 The agent escalated the ticket to the appropriate team if necessary. (6pts)",
+    feedback: "⚠️ The agent escalated the ticket to the appropriate team if necessary. (6pts)",
+  },
+  {
+    label: "Educate Customer",
+    yes: "✅ Shared helpful tips to prevent similar issues in the future, representing our CARE value: 'Respond with Empathy'",
+    no: "🚩 The agent provided all the necessary information to educate the customer and avoid a future callback. (5pts)",
+    feedback: "⚠️ The agent provided all the necessary information to educate the customer and avoid a future callback. (5pts)",
+  },
+  {
+    label: "Part Coherence",
+    yes: "✅ Requested part matched the issue and troubleshooting history.",
+    no: "🚩 The part(s) requested are coherent based on previous ticket history and troubleshooting performed if applicable. (10pts)",
+    feedback: "⚠️ The part(s) requested are coherent based on previous ticket history and troubleshooting performed if applicable. (10pts)",
+  },
+  {
+    label: "Ticket Follow-Up",
+    yes: "✅ Reviewed the ticket within the expected timeframe.",
+    no: "🚩 Followed up on the ticket based on the appropriate or requested follow-up timeframes. (8pts)",
+    feedback: "⚠️ Followed up on the ticket based on the appropriate or requested follow-up timeframes. (8pts)",
+  },
+    {
+    label: "Ticket Closed",
+    yes: "✅ The ticket was closed appropriately, after the resolution was reached, well done.",
+    no: "🚩 The agent closed the ticket without any resolution. (10pts)",
+    feedback: "⚠️ The agent closed the ticket without any resolution. (10pts)",
+  },
+    {
+    label: "Ticket Open",
+    yes: "✅ Ticket was left open/on hold whenever necessary or applicable",
+    no: "🚩 The agent left the ticket open after the resolution was provided. (5pts)",
+    feedback: "⚠️ The agent left the ticket open after the resolution was provided. (5pts)",
+  },
+   {
+    label: "Ticket Approval - FU",
+    yes: "✅ The ticket was approved within the expected timeframe.",
+    no: "🚩 Ticket was not approved within the valid expected timeframe. (-8pts)",
+    feedback: "⚠️ Ticket was not approved within the valid expected timeframe. (-8pts)",
+  },
+  {
+    label: "Customer Follow-up",
+    yes: "✅ Provided timely updates to the customer by phone or email.",
+    no: "🚩 Updated the customer via email or phone following the appropriate or requested update timeframes. (8pts)",
+    feedback: "⚠️ Updated the customer via email or phone following the appropriate or requested update timeframes. (8pts)",
+  },
+  {
+    label: "No Documentation",
+    yes: "✅ Failed to document the interaction.",
+    no: "🚩 Failed to document the interaction.",
+    feedback: "⚠️ Failed to document the interaction.",
+  },
+  {
+    label: "Sensitive Info",
+    yes: "✅ Released sensitive information to an unknown requestor.",
+    no: "🚩 Released sensitive information to an unknown requestor.",
+    feedback: "⚠️ Released sensitive information to an unknown requestor.",
+  },
+  {
+    label: "Professionalism",
+    yes: "✅ The agent was unprofessional.",
+    no: "🚩 The agent was unprofessional.",
+    feedback: "⚠️ The agent was unprofessional.",
+  },
+  {
+    label: "No Assistance",
+    yes: "✅ The agent rejected a transfer for a tech support scenario or did not assist the customer at all.",
+    no: "🚩 The agent rejected a transfer for a tech support scenario or did not assist the customer at all.",
+    feedback: "⚠️ The agent rejected a transfer for a tech support scenario or did not assist the customer at all.",
+  },
+  {
+    label: "Disconnected the call.",
+    yes: "✅ Disconnected the call.",
+    no: "🚩 Disconnected the call.",
+    feedback: "⚠️ Disconnected the call.",
+  },
+   {
+    label: "Line open (1 min)",
+    yes: "✅ Left the call line open after the call finished. (1 minute)",
+    no: "🚩 Left the call line open after the call finished. (1 minute)",
+    feedback: "⚠️ Left the call line open after the call finished. (1 minute)",
+  },
+  {
+    label: "Recording disclaimer.",
+    yes: "✅ Recording disclaimer.",
+    no: "🚩 Recording disclaimer.",
+    feedback: "⚠️ Recording disclaimer.",
+  },
+  {
+    label: "Ticket abandonment.",
+    yes: "✅ Ticket abandonment.",
+    no: "🚩 Ticket abandonment.",
+    feedback: "⚠️ Ticket abandonment.",
+  },
+  {
+    label: "Product Safety",
+    yes: "✅ The product safety process was not followed if applicable.",
+    no: "🚩 The product safety process was not followed if applicable.",
+    feedback: "⚠️ The product safety process was not followed if applicable.",
+  },
+  {
+    label: "10 Seconds answer",
+    yes: "✅ Failed to answer the call within 10 seconds.",
+    no: "🚩 Failed to answer the call within 10 seconds.",
+    feedback: "⚠️ Failed to answer the call within 10 seconds.",
+  },
+  
+]
+
+  const container = document.getElementById("criteria-container");
+  const feedbackBox = document.getElementById("feedback");
+
+ criteria.forEach((item, index) => {
+  const div = document.createElement("div");
+  div.className = "criterion";
+  div.innerHTML = `
+    <strong>${index + 1}. ${item.label}</strong><br>
+    <button class="yes" onclick="addFeedback(\`${item.yes}\`)">Yes ✅</button>
+    <button class="no" onclick="addFeedback(\`${item.no}\`)">No 🚩</button>
+    <button class="feedback" onclick="addFeedback(\`${item.feedback}\`)">Feedback ⚠️</button>
+  `;
+  container.appendChild(div);
+});
+
+
+  function addFeedback(text) {
+  feedbackBox.value += text + "\n\n";
+  if (text.startsWith("✅")) {
+    accomplishments.push(text);
+  } else if (text.startsWith("🚩")) {
+    developmentFeedback.push(text);
+  }
+}
+
+
+  function clearAll() {
+  document.getElementById("agentName").value = "";
+  document.getElementById("callerName").value = "";
+  document.getElementById("callReason").value = "";
+  document.getElementById("orderId").value = "";
+  document.getElementById("ticketId").value = "";
+  document.getElementById("feedback").value = "";
+  accomplishments = [];
+  developmentFeedback = [];
+}
+
+
+ function copyFeedback() {
+  const agent = document.getElementById("agentName").value.trim();
+  const caller = document.getElementById("callerName").value.trim();
+  const reason = document.getElementById("callReason").value.trim();
+  const orderId = document.getElementById("orderId").value.trim();
+  const ticketId = document.getElementById("ticketId").value.trim();
+  const rawFeedback = document.getElementById("feedback").value.trim();
+
+  const lines = rawFeedback.split("\n").map(line => line.trim()).filter(line => line !== "");
+
+  const accomplishments = [];
+  const developmentFeedback = [];
+  const feedbackOnly = [];
+
+  let currentBlock = null;
+
+  lines.forEach(line => {
+    if (line.startsWith("✅")) {
+      currentBlock = { type: "accomplishment", text: [line] };
+      accomplishments.push(currentBlock);
+    } else if (line.startsWith("🚩")) {
+      currentBlock = { type: "development", text: [line] };
+      developmentFeedback.push(currentBlock);
+    } else if (line.startsWith("⚠️")) {
+      currentBlock = { type: "feedback", text: [line] };
+      feedbackOnly.push(currentBlock);
+    } else if (currentBlock) {
+      currentBlock.text.push(line);
+    }
+  });
+
+  let header = "";
+  if (agent || caller || reason || orderId || ticketId) {
+    header += `Caller: ${caller || "N/A"}\n`;
+    header += `Call Reason: ${reason || "N/A"}\n`;
+    header += `Order ID: ${orderId || "N/A"}\n`;
+    header += `Ticket ID: ${ticketId || "N/A"}\n\n____________________________\n\n`;
+  }
+
+  let greeting = agent ? `Hello ${agent},\n\nYou can find the details about your evaluation below:\n\n` : "";
+  let parting = '____________________________\n\nThanks for reading your feedback.\n\nKeep checking your metrics:\n\nhttps://apps.powerapps.com/play/5195f0c7-73f5-4350-bd49-dfedf64c3c17';
+
+  let finalText = greeting + header;
+
+  if (accomplishments.length > 0) {
+    finalText += "Accomplishments:\n\n";
+    finalText += accomplishments.map(block => block.text.join("\n")).join("\n\n") + "\n\n";
+  }
+
+  if (developmentFeedback.length > 0) {
+    finalText += "____________________________\n\nFeedback for Development:\n\n";
+    finalText += developmentFeedback.map(block => block.text.join("\n")).join("\n\n") + "\n\n";
+  }
+
+  if (feedbackOnly.length > 0) {
+    finalText += "____________________________\n\nFeedback only (no deductions done, but keep in mind for future interactions):\n\n";
+    finalText += feedbackOnly.map(block => block.text.join("\n")).join("\n\n") + "\n\n";
+  }
+
+  finalText += parting;
+
+  navigator.clipboard.writeText(finalText);
+}
+</script>
+
+<button onclick="clearAll()" style="margin-top: 10px; padding: 10px 20px;">Clear All</button>
+</body>
+</html>
